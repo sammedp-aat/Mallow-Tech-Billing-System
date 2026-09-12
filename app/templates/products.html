@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Products - Billing System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="section-header">
+        <div>
+            <h1 class="page-title" style="margin-bottom:4px;">Products & Stock</h1>
+            <p class="page-subtitle">Manage inventory — add, update, or remove products</p>
+        </div>
+        <button class="btn btn-primary" onclick="document.getElementById('addProductForm').scrollIntoView({behavior:'smooth'})">+ Add Product</button>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    {% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product ID</th>
+                    <th>Name</th>
+                    <th>Stocks</th>
+                    <th>Price / Unit</th>
+                    <th>Tax %</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td><code>{{ p.product_id }}</code></td>
+                    <td>{{ p.name }}</td>
+                    <td>
+                        {% if p.available_stocks == 0 %}<span class="badge badge-error">Out of stock</span>
+                        {% elif p.available_stocks < 10 %}<span class="badge badge-warn">{{ p.available_stocks }}</span>
+                        {% else %}{{ p.available_stocks }}{% endif %}
+                    </td>
+                    <td>₹{{ "%.2f"|format(p.price_per_unit) }}</td>
+                    <td>{{ p.tax_percentage }}%</td>
+                    <td>
+                        <form method="POST" action="/products/update/{{ p.id }}" class="inline-form" onsubmit="return confirm('Update product?')">
+                            <input type="hidden" name="action" value="update">
+                            <button type="button" class="btn btn-sm btn-outline" onclick="toggleEdit({{ p.id }})">Edit</button>
+                            <button type="submit" formaction="/products/update/{{ p.id }}" onclick="return confirm('Delete {{ p.product_id }}?')" class="btn btn-sm btn-danger">Delete</button>
+                            <input type="hidden" name="action" value="delete" id="delete-action-{{ p.id }}" disabled>
+                        </form>
+                    </td>
+                </tr>
+                <tr id="edit-row-{{ p.id }}" class="edit-row hidden">
+                    <td colspan="6">
+                        <form method="POST" action="/products/update/{{ p.id }}" class="edit-form">
+                            <input type="text" name="name" value="{{ p.name }}" placeholder="Name" required>
+                            <input type="number" name="available_stocks" value="{{ p.available_stocks }}" min="0" required>
+                            <input type="number" step="0.01" name="price_per_unit" value="{{ p.price_per_unit }}" min="0" required>
+                            <input type="number" step="0.01" name="tax_percentage" value="{{ p.tax_percentage }}" min="0" max="100" required>
+                            <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="toggleEdit({{ p.id }})">Cancel</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card" id="addProductForm">
+    <h3>Add / Update Product</h3>
+    <p class="help-text">If Product ID already exists, it will be updated.</p>
+    <form method="POST" action="/products/create" class="form">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Product ID <span class="required">*</span></label>
+                <input type="text" name="product_id" placeholder="e.g. P107" required style="text-transform:uppercase">
+            </div>
+            <div class="form-group" style="flex:2;">
+                <label>Name <span class="required">*</span></label>
+                <input type="text" name="name" placeholder="Product name" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Available Stocks</label>
+                <input type="number" name="available_stocks" min="0" value="10" required>
+            </div>
+            <div class="form-group">
+                <label>Price per Unit (₹)</label>
+                <input type="number" step="0.01" name="price_per_unit" min="0" value="100.00" required>
+            </div>
+            <div class="form-group">
+                <label>Tax %</label>
+                <input type="number" step="0.01" name="tax_percentage" min="0" max="100" value="5.0" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Product</button>
+    </form>
+</div>
+
+<script>
+function toggleEdit(id){
+    const row = document.getElementById('edit-row-'+id);
+    row.classList.toggle('hidden');
+}
+</script>
+{% endblock %}

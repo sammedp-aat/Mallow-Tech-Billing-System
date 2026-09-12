@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Invoice {{ bill.bill_number }} - Billing System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="invoice-header">
+        <div>
+            <h1 class="page-title">Invoice</h1>
+            <p><strong>Bill Reference:</strong> <code>{{ bill.bill_number }}</code></p>
+            <p><strong>Customer Email:</strong> {{ bill.customer_email }}</p>
+            <p><strong>Date:</strong> {{ bill.created_at }}</p>
+        </div>
+        <div class="invoice-actions">
+            <a href="/" class="btn btn-primary">Create Another Bill</a>
+            <a href="/history?email={{ bill.customer_email }}" class="btn btn-secondary">View Purchase History</a>
+            <button onclick="window.print()" class="btn btn-outline">Print Invoice</button>
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product ID</th>
+                    <th>Product Name</th>
+                    <th style="text-align:right;">Unit Price</th>
+                    <th style="text-align:center;">Quantity</th>
+                    <th style="text-align:right;">Purchase Price</th>
+                    <th style="text-align:center;">Tax %</th>
+                    <th style="text-align:right;">Tax Payable</th>
+                    <th style="text-align:right;">Total Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in bill["items"] %}
+                <tr>
+                    <td><code>{{ item.product_id }}</code></td>
+                    <td>{{ item.product_name }}</td>
+                    <td style="text-align:right;">₹{{ "%.2f"|format(item.unit_price) }}</td>
+                    <td style="text-align:center;">{{ item.quantity }}</td>
+                    <td style="text-align:right;">₹{{ "%.2f"|format(item.purchase_price) }}</td>
+                    <td style="text-align:center;">{{ item.tax_percentage }}%</td>
+                    <td style="text-align:right;">₹{{ "%.2f"|format(item.tax_payable) }}</td>
+                    <td style="text-align:right; font-weight:600;">₹{{ "%.2f"|format(item.total_price) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-grid">
+        <div class="summary-card">
+            <h4>Summary</h4>
+            <div class="summary-row"><span>Total price without tax:</span><span>₹{{ "%.2f"|format(bill.total_without_tax) }}</span></div>
+            <div class="summary-row"><span>Total tax payable:</span><span>₹{{ "%.2f"|format(bill.total_tax_payable) }}</span></div>
+            <div class="summary-row"><span>Net price:</span><span>₹{{ "%.2f"|format(bill.net_price) }}</span></div>
+            <div class="summary-row highlight"><span>Rounded down net price:</span><span>₹{{ "%.2f"|format(bill.rounded_down_net_price) }}</span></div>
+            <div class="summary-row"><span>Cash paid:</span><span>₹{{ "%.2f"|format(bill.cash_paid) }}</span></div>
+            <div class="summary-row total"><span>Balance payable:</span><span>₹{{ "%.2f"|format(bill.balance_payable) }}</span></div>
+        </div>
+
+        <div class="summary-card">
+            <h4>Balance Denominations</h4>
+            {% if is_insufficient %}
+            <div class="alert alert-warn">
+                ⚠️ Insufficient denominations in shop. Could only return ₹{{ total_returned }} of ₹{{ bill.balance_payable|int }}. Short: ₹{{ remaining }}.
+                Showing maximum possible distribution.
+            </div>
+            {% endif %}
+            <table class="table compact">
+                <thead><tr><th>Denomination</th><th>Count Returned</th><th>Value</th></tr></thead>
+                <tbody>
+                    {% for d in denominations %}
+                    {% set cnt = bill.denominations_returned[d|string] if d|string in bill.denominations_returned else (bill.denominations_returned[d] if d in bill.denominations_returned else 0) %}
+                    <tr>
+                        <td>₹{{ d }}</td>
+                        <td><span class="badge {% if cnt>0 %}badge-success{% endif %}">{{ cnt }}</span></td>
+                        <td>₹{{ cnt * d }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="total">
+                        <td colspan="2"><strong>Total returned</strong></td>
+                        <td><strong>₹{{ total_returned }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <p class="help-text">Change breakdown computed greedy from ₹500 → ₹1 using available counts.</p>
+        </div>
+    </div>
+
+    <div class="alert alert-info" style="margin-top:20px;">
+        📧 Invoice email has been queued via background task. If SMTP not configured, check server console for DEV fallback.
+    </div>
+</div>
+{% endblock %}

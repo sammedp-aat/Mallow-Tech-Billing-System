@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Billing System{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">🧾 Billing System</a>
+            <div class="nav-links">
+                <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">New Bill</a>
+                <a href="/history" class="{% if request.url.path.startswith('/history') %}active{% endif %}">Purchase History</a>
+                <a href="/products" class="{% if request.url.path.startswith('/products') %}active{% endif %}">Products</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 Billing System — Production Ready • SQLite & FastAPI • <a href="/health" target="_blank">Health</a></p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}New Bill - Billing System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 class="page-title">Billing Form</h1>
+    <p class="page-subtitle">Create a new invoice with tax and automated change calculation</p>
+
+    {% if error %}
+    <div class="alert alert-error">
+        <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <form id="billingForm" method="POST" action="/generate-bill" class="form">
+        <!-- Customer Email -->
+        <div class="form-group">
+            <label for="customer_email">Customer Email <span class="required">*</span></label>
+            <input type="email" id="customer_email" name="customer_email" required placeholder="customer@example.com">
+        </div>
+
+        <!-- Bill Section -->
+        <div class="section">
+            <div class="section-header">
+                <h3>Bill Section</h3>
+                <button type="button" id="addRowBtn" class="btn btn-secondary btn-sm">+ Add New</button>
+            </div>
+            <div class="separator"></div>
+
+            <div id="productRows">
+                <!-- Initial row -->
+                <div class="product-row">
+                    <div class="form-group">
+                        <label>Product ID</label>
+                        <input type="text" name="product_id" list="productList" placeholder="e.g. P101" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" name="quantity" min="1" value="1" required>
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm remove-row" onclick="removeRow(this)">Remove</button>
+                </div>
+            </div>
+
+            <datalist id="productList">
+                {% for p in products %}
+                <option value="{{ p.product_id }}">{{ p.product_id }} — {{ p.name }} (₹{{ "%.2f"|format(p.price_per_unit) }}, Stock: {{ p.available_stocks }})</option>
+                {% endfor %}
+            </datalist>
+            <p class="help-text">Tip: start typing product ID — autocomplete shows price & stock.</p>
+        </div>
+
+        <div class="separator thick"></div>
+
+        <!-- Denominations -->
+        <div class="section">
+            <h3>Denominations <span class="help-text">(Shop available counts for change)</span></h3>
+            <div class="denom-vertical-wrap">
+                <table class="denom-vertical-table">
+                    <thead>
+                        <tr>
+                            <th>Denomination</th>
+                            <th>Count Available</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in denominations %}
+                        <tr>
+                            <td class="denom-label-cell">
+                                <span class="denom-badge">₹ {{ d }}</span>
+                            </td>
+                            <td class="denom-input-cell">
+                                <input type="number" name="denom_{{ d }}" min="0" value="20" required class="denom-input">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p class="help-text" style="margin-top:8px;">Default 20 each. Greedy change from ₹500 → ₹1.</p>
+            </div>
+        </div>
+
+        <!-- Cash Paid -->
+        <div class="form-group">
+            <label for="cash_paid">Cash Paid by Customer <span class="required">*</span></label>
+            <input type="number" id="cash_paid" name="cash_paid" min="0" step="0.01" required placeholder="e.g. 2000">
+            <small class="help-text">Must be ≥ rounded net price. Change will be auto-calculated.</small>
+        </div>
+
+        <div class="form-actions">
+            <button type="reset" class="btn btn-outline">Cancel</button>
+            <button type="submit" class="btn btn-primary">Generate Bill</button>
+        </div>
+    </form>
+</div>
+
+<!-- Quick product reference -->
+<div class="card secondary">
+    <h3>Available Products</h3>
+    <div class="table-responsive">
+        <table class="table compact">
+            <thead>
+                <tr><th>ID</th><th>Name</th><th>Stock</th><th>Price</th><th>Tax</th></tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td><code>{{ p.product_id }}</code></td>
+                    <td>{{ p.name }}</td>
+                    <td>{% if p.available_stocks < 10 %}<span class="badge badge-warn">{{ p.available_stocks }}</span>{% else %}{{ p.available_stocks }}{% endif %}</td>
+                    <td>₹{{ "%.2f"|format(p.price_per_unit) }}</td>
+                    <td>{{ p.tax_percentage }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/billing.js"></script>
+{% endblock %}

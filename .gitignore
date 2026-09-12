@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+.env
+.venv/
+*.egg-info/
+
+# Database - keep schema but ignore local data (uncomment if you want to keep db)
+billing.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Testing / Cache
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Env
+.env.local

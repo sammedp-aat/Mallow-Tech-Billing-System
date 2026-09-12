@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Purchase History - Billing System{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1 class="page-title">Customer Purchase History</h1>
+    <p class="page-subtitle">Search by customer email to view all prior bills</p>
+
+    <form method="GET" action="/history" class="form inline-search">
+        <div class="form-group" style="flex:1;">
+            <input type="email" name="email" value="{{ search_email }}" placeholder="Enter customer email e.g. alice@example.com" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+        {% if search_email %}<a href="/history" class="btn btn-outline">Clear</a>{% endif %}
+    </form>
+
+    {% if search_email %}
+        {% if bills %}
+            <p class="help-text">Found {{ bills|length }} bill(s) for <strong>{{ search_email }}</strong></p>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Bill Reference</th>
+                            <th>Net Price</th>
+                            <th>Rounded</th>
+                            <th>Balance</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in bills %}
+                        <tr>
+                            <td>{{ b.created_at }}</td>
+                            <td><code>{{ b.bill_number }}</code></td>
+                            <td>₹{{ "%.2f"|format(b.net_price) }}</td>
+                            <td>₹{{ "%.2f"|format(b.rounded_down_net_price) }}</td>
+                            <td>₹{{ "%.2f"|format(b.balance_payable) }}</td>
+                            <td><a href="/bill/{{ b.id }}" class="btn btn-sm btn-secondary">View Details →</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Expandable details below? Provide accordion -->
+            <div class="history-details">
+                {% for b in bills %}
+                <details class="accordion">
+                    <summary>
+                        <strong>{{ b.bill_number }}</strong> — {{ b.created_at }} — ₹{{ "%.2f"|format(b.net_price) }} ({{ b['items']|length }} items)
+                    </summary>
+                    <div class="table-responsive">
+                        <table class="table compact">
+                            <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Tax</th><th>Total</th></tr></thead>
+                            <tbody>
+                                {% for it in b['items'] %}
+                                <tr>
+                                    <td>{{ it.product_id }} — {{ it.product_name }}</td>
+                                    <td>{{ it.quantity }}</td>
+                                    <td>₹{{ "%.2f"|format(it.purchase_price) }}</td>
+                                    <td>₹{{ "%.2f"|format(it.tax_payable) }}</td>
+                                    <td>₹{{ "%.2f"|format(it.total_price) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">No bills found for <strong>{{ search_email }}</strong></div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <p>🔍 Enter an email above to see purchase history.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
