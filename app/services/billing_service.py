@@ -5,7 +5,7 @@ Production-grade with atomic transactions and clear error handling.
 import math
 import json
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Tuple
 
 from fastapi import HTTPException
@@ -85,7 +85,7 @@ def calculate_denominations(balance: int, available: Dict[int, int]) -> Tuple[Di
 
 def generate_bill_number() -> str:
     """Generate unique bill number: BILL-YYYYMMDD-<hex>"""
-    date_str = datetime.utcnow().strftime("%Y%m%d")
+    date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
     rand_hex = secrets.token_hex(4).upper()  # 8 hex chars
     return f"BILL-{date_str}-{rand_hex}"
 
@@ -207,7 +207,7 @@ def create_bill(
             cash_paid=float(cash_paid),
             balance_payable=float(balance),
             denominations_returned=json.dumps(denom_result),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         db.add(bill)
         db.flush()  # get bill.id

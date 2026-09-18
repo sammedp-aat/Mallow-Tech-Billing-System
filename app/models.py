@@ -1,7 +1,7 @@
 """
 SQLAlchemy ORM models for Billing System.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
 
@@ -35,7 +35,7 @@ class Bill(Base):
     cash_paid = Column(Float, nullable=False)
     balance_payable = Column(Float, nullable=False)
     denominations_returned = Column(Text, nullable=True)  # JSON string
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     items = relationship("BillItem", back_populates="bill", cascade="all, delete-orphan")
 
